@@ -9,18 +9,29 @@ class Block {
         this.data = data;
         this.previousHash = previous;
         this.hash = this.calculateHash();
+        this.nonce = Math.ceil(Math.random() * Number.MAX_SAFE_INTEGER);
     }
 
     calculateHash() {
         return sha256(
-            this.timeStamp + this.previousHash + JSON.stringify(this.data)
+            this.timeStamp + this.previousHash + JSON.stringify(this.data) + this.nonce
         ).toString();
+    }
+
+    mineBlock(difficulty) {
+        while (this.hash.substring(0, difficulty) !== Array(difficulty + 1).join("0")) {
+            this.nonce = this.nonce + 1;
+            this.hash = this.calculateHash();
+        }
+
+        console.log("MineCraft: " + this.hash);
     }
 }
 
 class Blockchain {
     constructor() {
         this.chain = [this.createGenesisBlock()];
+        this.difficulty = 4;
     }
 
     createGenesisBlock() {
@@ -32,7 +43,9 @@ class Blockchain {
     }
 
     addBlock(data) {
-        this.chain.push(new Block(data, this.getLatestBlock().hash));
+        let newBlock = new Block(data, this.getLatestBlock().hash);
+        newBlock.mineBlock(this.difficulty);
+        this.chain.push(newBlock);
     }
 
     validate() {
@@ -63,13 +76,11 @@ console.log("Is this chain valid?", coinChain.validate() ? "yes" : "no");
 
 console.log("Modify the blockchain: Sherman hacks the payment");
 coinChain.chain[1].data = { to: "Sherman", from: "Kyle", payment: "100" };
-console.log(JSON.stringify(coinChain, null, 4));
+// console.log(JSON.stringify(coinChain, null, 4));
 console.log("Is this chain valid?", coinChain.validate() ? "yes" : "no");
 
-console.log(
-    "Modify the blockchain: Sherman hacks the payment and recalculates the hash"
-);
+console.log("Modify the blockchain: Sherman hacks the payment and recalculates the hash");
 coinChain.chain[1].data = { to: "Sherman", from: "Kyle", payment: "100" };
 coinChain.chain[1].hash = coinChain.chain[1].calculateHash();
-console.log(JSON.stringify(coinChain, null, 4));
+// console.log(JSON.stringify(coinChain, null, 4));
 console.log("Is this chain valid?", coinChain.validate() ? "yes" : "no");
